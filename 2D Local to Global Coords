@@ -1,0 +1,114 @@
+#include <iostream>
+#include <math.h>
+#include <Eigen/Dense>
+
+const double PI =3.1415926535897932L;
+///defines pi to a ridiculous number of dp
+
+
+/// COORDINATE SYSTEM. POSITIVE X POINTS RIGHT, POSITIVE Y POINT DOWN
+
+using namespace Eigen;
+using namespace std;
+
+
+enum direction_t {FORWARD, BACKWARD, LEFT, RIGHT};
+
+///rounds numbers to 6 significant figures
+float round6sf(float x)
+{
+    return round(x*1000000)/1000000;
+}
+
+///converts degrees to radians
+float degToRad(float x)
+{
+    return (x*PI/180);
+}
+
+///converts radians to degrees
+float radToDeg(float x)
+{
+    return (x/PI*180);
+}
+
+
+///creates a 3x3 normalised transformation matrix containing the drone's current rotation and position in global coordinates
+MatrixXd createDrone(float xPos, float yPos, float psi)
+{
+    psi=degToRad(psi);
+    MatrixXd m(3,3);
+    m(0,0)=cos(psi);
+    m(0,1)=-sin(psi);
+    m(0,2)=xPos;
+    m(1,0)=sin(psi);
+    m(1,1)=cos(psi);
+    m(1,2)=yPos;
+    m(2,0)=0;
+    m(2,1)=0;
+    m(2,2)=1;
+    return m;
+}
+
+///Moves the drone either Forwards, backwards, left or right by a distance dist
+MatrixXd mov(float dist, direction_t dir, MatrixXd pos)
+{
+    Vector3d trans(3);
+    switch ( dir ) {
+    case FORWARD:
+        trans<< dist,0,1;
+        break;
+    case BACKWARD:
+        trans<< -dist,0,1;
+        break;
+    case RIGHT:
+        trans<< 0,dist,1;
+        break;
+    case LEFT:
+        trans<< 0,-dist,1;
+        break;
+    default:
+        trans<< dist,0,1;
+        break;
+    }
+
+
+    Vector3d result = pos*trans;
+//    cout<<result<<endl;
+    pos(0,2)=round6sf(result(0));
+    pos(1,2)=round6sf(result(1));
+    return pos;
+}
+
+///Rotate the drone by psi number of degrees
+MatrixXd rot(float psi, MatrixXd pos)
+{
+    psi=degToRad(psi);
+    float currentpsi=atan2(pos(1,0),pos(0,0));
+    psi+=currentpsi;
+    pos(0,0)=round6sf(cos(psi));
+    pos(0,1)=round6sf(-sin(psi));
+    pos(1,0)=round6sf(sin(psi));
+    pos(1,1)=round6sf(cos(psi));
+    return pos;
+}
+
+
+int main()
+{
+    cout.precision(7);
+    ///inputs the current angle (positive x axis is 0, positive values of psi rotate clockwise) of the drone and the distance to travel forwards
+    float psi = 0;
+
+    /// creates the drone at (0,0) and rotation psi
+    MatrixXd robot_LocRot = createDrone(0,0,psi);
+
+///move the drone in a square with side length 4
+    for ( int i = 1; i<=4; i++)
+   {
+        robot_LocRot= mov(3, FORWARD, robot_LocRot);
+        robot_LocRot= rot(540,  robot_LocRot);
+        cout<<endl<<endl<<robot_LocRot<<endl;
+    }
+    return 0;
+}
