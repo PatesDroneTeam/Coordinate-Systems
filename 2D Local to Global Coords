@@ -11,7 +11,7 @@ const double PI =3.1415926535897932L;
 using namespace Eigen;
 using namespace std;
 
-
+///Defines an enum for easy directions of movement
 enum direction_t {FORWARD, BACKWARD, LEFT, RIGHT};
 
 ///rounds numbers to 6 significant figures
